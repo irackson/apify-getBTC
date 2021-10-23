@@ -1,3 +1,4 @@
+// @ts-nocheck
 // This is the main Node.js source code file of your actor.
 // It is referenced from the "scripts" section of the package.json file,
 // so that it can be started by running "npm start".
@@ -14,7 +15,8 @@ Apify.main(async () => {
     console.log('Input:');
     console.dir(input);
 
-    if (!input || !input.url) throw new Error('Input must be a JSON object with the "url" field!');
+    if (!input || !input.url)
+        throw new Error('Input must be a JSON object with the "url" field!');
 
     console.log('Launching Puppeteer...');
     const browser = await Apify.launchPuppeteer();
@@ -22,16 +24,20 @@ Apify.main(async () => {
     console.log(`Opening page ${input.url}...`);
     const page = await browser.newPage();
     await page.goto(input.url);
-    const title = await page.title();
-    console.log(`Title of the page "${input.url}" is "${title}".`);
 
-    console.log('Saving output...');
-    await Apify.setValue('OUTPUT', {
-        title,
+    const btcString = await page.evaluate(() => {
+        const btcElement = document.querySelector(
+            `span[data-title='${'BTC per Share'}']`
+        );
+        if (!btcElement) return NaN;
+        return btcElement.innerText;
     });
+    const btc = parseFloat(btcString.slice(0, -1));
+    console.log(`BTC: ${btc}`);
+
+    await Apify.pushData({ btc });
 
     console.log('Closing Puppeteer...');
     await browser.close();
-
     console.log('Done.');
 });
