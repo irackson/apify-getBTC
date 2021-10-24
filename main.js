@@ -35,7 +35,19 @@ Apify.main(async () => {
     const btc = parseFloat(btcString.slice(0, -1));
     console.log(`BTC: ${btc}`);
 
-    await Apify.pushData({ btc });
+    await page.goto('https://grayscale.com/products/grayscale-ethereum-trust/');
+
+    const ethString = await page.evaluate(() => {
+        const ethElement = document.querySelector(
+            `span[data-title='${'ETH per Share'}']`
+        );
+        if (!ethElement) return NaN;
+        return ethElement.innerText;
+    });
+    const eth = parseFloat(ethString.slice(0, -1));
+    console.log(`ETH: ${eth}`);
+
+    await Apify.pushData({ BTC: btc, ETH: eth });
 
     console.log('Closing Puppeteer...');
     await browser.close();
